@@ -99,22 +99,46 @@ class App extends Component {
 
   signupHandler = (event, authData) => {
     event.preventDefault();
+    const graphQlMutation = {
+      query: `
+        mutation {
+          createUser(userInput:{email:"${authData.signupForm.email.value}", password:"${authData.signupForm.password.value}", name:"${authData.signupForm.name.value}"}) {
+            _id, email
+          }
+        }`
+    }
     this.setState({ authLoading: true });
-    fetch('URL')
+    fetch('http://localhost:8080/graphql', {
+      method:'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body:JSON.stringify(graphQlMutation)
+    })
       .then(res => {
-        if (res.status === 422) {
-          throw new Error(
-            "Validation failed. Make sure the email address isn't used yet!"
-          );
-        }
-        if (res.status !== 200 && res.status !== 201) {
-          console.log('Error!');
-          throw new Error('Creating a user failed!');
-        }
+        // if (res.status === 422) {
+        //   throw new Error(
+        //     "Validation failed. Make sure the email address isn't used yet!"
+        //   );
+        // }
+        // if (res.status !== 200 && res.status !== 201) {
+        //   console.log('Error!');
+        //   throw new Error('Creating a user failed!');
+        // }
         return res.json();
       })
       .then(resData => {
-        console.log(resData);
+        console.log(resData.errors);
+        if (resData.errors) {
+          if (resData.errors[0].status === 422) {
+            throw new Error(
+              "Validation failed. Make sure the email address isn't used yet!"
+            );
+          } else {
+            console.log('Error!');
+            throw new Error('Creating a user failed!');
+          }
+        }
         this.setState({ isAuth: false, authLoading: false });
         this.props.history.replace('/');
       })
