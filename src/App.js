@@ -57,29 +57,51 @@ class App extends Component {
   };
 
   loginHandler = (event, authData) => {
+    console.log(authData)
     event.preventDefault();
     this.setState({ authLoading: true });
-    fetch('URL')
+    const graphQlLoginBodyRequest = {
+      query: `
+        query {
+          login(loginInput:{email:"${authData.email}", password:"${authData.password}"}) {
+            token, userId
+          }
+        }`
+    }
+    fetch('http://localhost:8080/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(graphQlLoginBodyRequest)
+    })
       .then(res => {
-        if (res.status === 422) {
-          throw new Error('Validation failed.');
-        }
-        if (res.status !== 200 && res.status !== 201) {
-          console.log('Error!');
-          throw new Error('Could not authenticate you!');
-        }
+        // if (res.status === 422) {
+        //   throw new Error('Validation failed.');
+        // }
+        // if (res.status !== 200 && res.status !== 201) {
+        //   console.log('Error!');
+        //   throw new Error('Could not authenticate you!');
+        // }
         return res.json();
       })
       .then(resData => {
         console.log(resData);
+        if (resData.errors) {
+          if (resData.errors[0].status === 401) {
+            throw new Error('Could not authenticate you!');
+          } else {
+            throw new Error('Some thing went wrong')
+          }
+        }
         this.setState({
           isAuth: true,
-          token: resData.token,
+          token: resData.data.login.token,
           authLoading: false,
-          userId: resData.userId
+          userId: resData.data.login.userId
         });
-        localStorage.setItem('token', resData.token);
-        localStorage.setItem('userId', resData.userId);
+        localStorage.setItem('token', resData.data.login.token);
+        localStorage.setItem('userId', resData.data.login.userId);
         const remainingMilliseconds = 60 * 60 * 1000;
         const expiryDate = new Date(
           new Date().getTime() + remainingMilliseconds
@@ -99,7 +121,7 @@ class App extends Component {
 
   signupHandler = (event, authData) => {
     event.preventDefault();
-    const graphQlMutation = {
+    const graphQlRegisterBodyRequest = {
       query: `
         mutation {
           createUser(userInput:{email:"${authData.signupForm.email.value}", password:"${authData.signupForm.password.value}", name:"${authData.signupForm.name.value}"}) {
@@ -113,7 +135,7 @@ class App extends Component {
       headers: {
         'Content-Type': 'application/json'
       },
-      body:JSON.stringify(graphQlMutation)
+      body:JSON.stringify(graphQlRegisterBodyRequest)
     })
       .then(res => {
         // if (res.status === 422) {
