@@ -102,32 +102,61 @@ class Feed extends Component {
   };
 
   finishEditHandler = postData => {
+    // const formData = new FormData()
+    // formData.append('title', postData.title)
+    // formData.append('content', postData.content)
+    // formData.append('image', postData.image)
     this.setState({
       editLoading: true
     });
     // Set up data (with image!)
-    let url = 'http://localhost:8080/feed/post';
-    if (this.state.editPost) {
-      url = 'URL';
-    }
+    // let url = 'http://localhost:8080/feed/post';
+    // let method = 'POST'
+    // if (this.state.editPost) {
+    //   console.log(this.state.editPost);
+    //   url = 'http://localhost:8080/feed/post/' + this.state.editPost._id;
+    //   method = 'PUT'
+    // }
 
-    fetch(url, {
+    const graphqlCreatePost = {
+      query: `
+        mutation {
+          createPost(postInput: {title: "${postData.title}", content: "${postData.content}, image:"some image"})
+          {
+            _id
+            title
+            content
+            creator {
+              name
+            }
+            createdAt
+          }
+        }
+      `
+    }
+    fetch('http://localhost:8080/graphql', {
       method: 'POST',
+      body: graphqlCreatePost,
       headers: {
+        'Authorization': 'Bearer ' + this.props.token,
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        title: postData.title,
-        content: postData.content,
-      })
+      }
     })
       .then(res => {
-        if (res.status !== 200 && res.status !== 201) {
-          throw new Error('Creating or editing a post failed!');
-        }
+        // if (res.status !== 200 && res.status !== 201) {
+        //   throw new Error('Creating or editing a post failed!');
+        // }
         return res.json();
       })
       .then(resData => {
+        console.log(resData);
+        if (resData.errors) {
+          if (resData.errors[0].status === 401) {
+            throw new Error('Could not authenticate you!');
+          } else {
+            throw new Error('Creating or editing a post failed!')
+          }
+        }
         const post = {
           _id: resData.post._id,
           title: resData.post.title,
