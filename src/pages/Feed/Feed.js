@@ -50,17 +50,46 @@ class Feed extends Component {
       page--;
       this.setState({ postPage: page });
     }
-    fetch('http://localhost:8080/feed/posts')
-      .then(res => {
-        if (res.status !== 200) {
-          throw new Error('Failed to fetch posts.');
+    const graphqlGetPost = {
+      query: `
+        {
+          posts {
+            posts {
+              _id
+              content
+              title
+              creator {
+                name
+              }
+              createdAt
+            }
+            totalPosts
+          }
         }
+      `
+    }
+    fetch('http://localhost:8080/graphql', {
+      method: 'POST',
+      body:JSON.stringify(graphqlGetPost),
+      headers: {
+        'Authorization': 'Bearer ' + this.props.token,
+        'Content-Type': 'application/json'
+      }
+      })
+      .then(res => {
         return res.json();
       })
       .then(resData => {
+        if (resData.errors) {
+          if (resData.errors[0].status === 401) {
+            throw new Error('Could not authenticate you!');
+          } else {
+            throw new Error('failed to get posts!')
+          }
+        }
         this.setState({
-          posts: resData.posts,
-          totalPosts: resData.totalItems,
+          posts: resData.data.posts.posts,
+          totalPosts: resData.data.posts.totalPosts,
           postsLoading: false
         });
       })
@@ -121,14 +150,13 @@ class Feed extends Component {
     const graphqlCreatePost = {
       query: `
         mutation {
-          createPost(postInput: {title: "${postData.title}", content: "${postData.content}, image:"some image"})
-          {
-            _id
-            title
-            content
+          createPost(postInput: {title:"${postData.title}",content:"${postData.content}",imageUrl:"some"}) {
+            _id,
+            title,
+            content,
             creator {
               name
-            }
+            },
             createdAt
           }
         }
@@ -136,7 +164,7 @@ class Feed extends Component {
     }
     fetch('http://localhost:8080/graphql', {
       method: 'POST',
-      body: graphqlCreatePost,
+      body: JSON.stringify(graphqlCreatePost),
       headers: {
         'Authorization': 'Bearer ' + this.props.token,
         'Content-Type': 'application/json'
@@ -158,11 +186,11 @@ class Feed extends Component {
           }
         }
         const post = {
-          _id: resData.post._id,
-          title: resData.post.title,
-          content: resData.post.content,
-          creator: resData.post.creator,
-          createdAt: resData.post.createdAt
+          _id: resData.data.createPost._id,
+          title: resData.data.createPost.title,
+          content: resData.data.createPost.content,
+          creator: resData.data.createPost.creator,
+          createdAt: resData.data.createPost.createdAt
         };
         this.setState(prevState => {
           let updatedPosts = [...prevState.posts];
