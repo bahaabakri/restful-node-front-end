@@ -57,6 +57,7 @@ class Feed extends Component {
             posts {
               _id
               content
+              imageUrl
               title
               creator {
                 name
@@ -72,7 +73,7 @@ class Feed extends Component {
       method: 'POST',
       body:JSON.stringify(graphqlGetPost),
       headers: {
-        Authorization: 'Bearer ' + this.props.token,
+        Authorization: 'Bearer ' + localStorage.getItem('token'),
         'Content-Type': 'application/json'
       }
       })
@@ -149,7 +150,7 @@ class Feed extends Component {
     fetch('http://localhost:8080/upload-image', {
       method:'PUT',
       header: {
-        'Authorization': 'Bearer ' + this.props.token
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
       },
       body: formData
     })
@@ -181,7 +182,7 @@ class Feed extends Component {
         method: 'POST',
         body: JSON.stringify(graphqlCreatePost),
         headers: {
-          'Authorization': 'Bearer ' + this.props.token,
+          'Authorization': 'Bearer ' + localStorage.getItem('token'),
           'Content-Type': 'application/json'
         }
       })
