@@ -94,12 +94,6 @@ class App extends Component {
             throw new Error('Some thing went wrong')
           }
         }
-        this.setState({
-          isAuth: true,
-          token: resData.data.login.token,
-          authLoading: false,
-          userId: resData.data.login.userId
-        });
         localStorage.setItem('token', resData.data.login.token);
         localStorage.setItem('userId', resData.data.login.userId);
         const remainingMilliseconds = 60 * 60 * 1000;
@@ -108,6 +102,13 @@ class App extends Component {
         );
         localStorage.setItem('expiryDate', expiryDate.toISOString());
         this.setAutoLogout(remainingMilliseconds);
+        // this.props.history.replace('/');
+        this.setState({
+          isAuth: true,
+          token: resData.data.login.token,
+          authLoading: false,
+          userId: resData.data.login.userId
+        });
       })
       .catch(err => {
         console.log(err);

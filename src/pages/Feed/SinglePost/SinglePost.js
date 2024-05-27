@@ -33,7 +33,7 @@ class SinglePost extends Component {
       method: 'POST',
       body: JSON.stringify(graphqlGetPost),
       headers: {
-        Authorization: "Bearer " + localStorage.getItem('token'),
+        'Authorization': "Bearer " + localStorage.getItem('token'),
         "Content-Type": "application/json",
       },
     })
